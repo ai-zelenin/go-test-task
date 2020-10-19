@@ -1,0 +1,89 @@
+syntax = "proto3";
+package pb;
+import "google/api/annotations.proto";
+
+/*
+ Тестовое задание:
+ реализовать сервис grpc + grpc-gateway  DocumentService и упаковать его в докер
+
+ Дополнительные баллы:
+ Использование пактов обеспечивающих DI(fx)
+ Использование паттерна семафора при рендере множества документов
+ Наличие конфигурации приложения и возможность ее расширения
+ Использование абстракций при сохранении документа
+ Коментарии для неочевидных функций
+ Соблюдение code style uber
+*/
+
+/*
+ Структурный элемент документа/дерева
+ */
+message Node {
+    // Это поле говорит о том в какой html тэг/тэги/текст преобразовать ноду
+    // Пример: type:'p' renderTo '<p></p>'
+    string type = 1;
+
+    // Это поле текст который нужно отообразить в элементе если его тип == "text"
+    // Пример: type:'text' text:'someText' renderTo 'someText'
+    string text = 2;
+
+    // Это поле содержит атрибуты которые нужно проставить html тэгу
+    // Пример: type:'p' attrs["class"]="red" renderTo '<p class="red"></p>'
+    map<string, string> attrs = 3;
+
+    // Это поле содержит структурные элементы которыми нужно обернуть данный элемент(только для типа текст)
+    // Пример: type:'text' text:'someText' marks[0]={type:"strong"} renderTo '<strong>someText</strong>'
+    repeated Node marks = 4;
+    // Это поле сожержит дочернии элементы
+    // Пример: type:'div' content[0]={type:"p"} renderTo '<div><p></p></div>'
+    repeated Node content = 5;
+}
+
+/* Объект документа это коренвая нода дерева и имя по которому его можно найти */
+message Document {
+    string name = 1;
+    Node root = 2;
+}
+message DocumentList {
+    repeated Document value = 1;
+}
+
+/* Объект оболочка для текста */
+message String {
+    string value = 1;
+}
+message StringList {
+    repeated String value = 1;
+}
+
+/* Сервис должен уметь сохранять документы и преобразовывать их в HTML */
+service DocumentService {
+    /* Отправляем документ с заполеннным именем в ответ приходит HTML  */
+    rpc Render (Document) returns (String) {
+        option (google.api.http) = {
+            post: "/Render"
+            body: "*"
+        };
+    };
+    /*  Отправляем список документов с заполеннным именем в ответ приходит список HTML документов   */
+    rpc RenderList (DocumentList) returns (StringList) {
+        option (google.api.http) = {
+            post: "/RenderList"
+            body: "*"
+        };
+    };
+    /* Отправлем документ и он сохраняется по имени(куда и как на ваше усмотрение)   */
+    rpc Save (Document) returns (Document) {
+        option (google.api.http) = {
+            post: "/Save"
+            body: "*"
+        };
+    };
+    /* Отправляем документ с заполеннным именем в ответ он возвращается с заполненным деревом */
+    rpc Get (Document) returns (Document) {
+        option (google.api.http) = {
+            post: "/Get"
+            body: "*"
+        };
+    };
+}
