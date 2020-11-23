@@ -58,14 +58,14 @@ message StringList {
 
 /* Сервис должен уметь сохранять документы и преобразовывать их в HTML */
 service DocumentService {
-    /* Отправляем документ с заполеннным именем в ответ приходит HTML  */
+    /* Отправляем документ в ответ приходит HTML  */
     rpc Render (Document) returns (String) {
         option (google.api.http) = {
             post: "/Render"
             body: "*"
         };
     };
-    /*  Отправляем список документов с заполеннным именем в ответ приходит список HTML документов   */
+    /*  Отправляем список документов в ответ приходит список HTML документов   */
     rpc RenderList (DocumentList) returns (StringList) {
         option (google.api.http) = {
             post: "/RenderList"
